@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { crearEventosRouter } from './eventos.routes.js';
-import { crearComprasRouter } from './compras.routes.js';
-import { crearOrganizadoresRouter } from './organizadores.routes.js';
+import { crearEventosRouter } from './Eventos.routes.js';
+import { crearComprasRouter } from './Compras.routes.js';
+import { crearOrganizadoresRouter } from './Organizadores.routes.js';
 
 export function crearRouter({ eventoController, compraController, reseniaController }) {
     const router = Router();
