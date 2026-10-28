@@ -31,6 +31,6 @@ Sin alterar ninguna de las firmas pedidas por el diagrama (`hayCupoPara(cantidad
 * **`Compra.puedeCancelarse(fechaActual)`:** Evalúa la regla de negocio del organizador (**CU-08**): que la compra no esté en estado `UTILIZADA` (ni cancelada/reembolsada) y que la fecha del evento aún no haya pasado.
 * **`Compra.agregarMensaje({ usuario, mensaje, enviado })`:** Instancia un `Mensaje` y lo agrega a la colección `mensajes` de la compra (**CU-06** y **CU-12**).
 
-### 6. Compatibilidad de `nombre` y `nombreCategoria` en `Categoria`
-* **Decisión:** En `Categoria` se soporta tanto `{ nombre, descripcion }` (según el diagrama) como `{ nombreCategoria, descripcion }` (implementación inicial), exponiendo ambas propiedades sincronizadas.
-* **Justificación:** Mantener compatibilidad total con el código ya escrito y con el nombre del atributo en el diagrama de clases.
+### 6. Autovalidación de Invariantes y Transiciones de Estado en el Dominio
+* **Decisión:** Las entidades de dominio (`Compra`, `TipoEntrada`, `Resenia`, `Mensaje`, `Evento`, `CambioEstadoCompra`) validan sus propias invariantes en su construcción y en sus métodos de mutación (por ejemplo, `Compra.actualizarEstado` valida que la transición de estado sea válida según el ciclo de vida de `EstadoCompra`, `Resenia` valida que la puntuación esté entre 1 y 5, y `TipoEntrada` valida precios y cupos no negativos).
+* **Justificación:** Siguiendo el principio de **Modelo de Dominio Enriquecido y Autovalidado**, cada entidad vela por su propia consistencia y protege su estado interno sin depender exclusivamente de validaciones en la capa de servicios.

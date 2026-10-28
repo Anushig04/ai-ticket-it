@@ -4,6 +4,19 @@ import { Mensaje } from './Mensaje.js';
 import { Usuario } from './Usuario.js';
 import { Evento } from './Evento.js';
 import { TipoEntrada } from './TipoEntrada.js';
+import { DomainError } from '../errors/DomainError.js';
+
+export const TRANSICIONES_VALIDAS = Object.freeze({
+    [EstadoCompra.PENDIENTE]: [EstadoCompra.CONFIRMADA, EstadoCompra.CANCELADA],
+    [EstadoCompra.CONFIRMADA]: [
+        EstadoCompra.UTILIZADA,
+        EstadoCompra.CANCELADA,
+        EstadoCompra.REEMBOLSADA
+    ],
+    [EstadoCompra.CANCELADA]: [EstadoCompra.REEMBOLSADA],
+    [EstadoCompra.UTILIZADA]: [],
+    [EstadoCompra.REEMBOLSADA]: []
+});
 
 export class Compra {
     constructor({
@@ -18,27 +31,43 @@ export class Compra {
         historialEstados = []
     }) {
         if (!(comprador instanceof Usuario)) {
-            throw new Error('El atributo "comprador" debe ser una instancia de Usuario');
+            throw new DomainError('El atributo "comprador" debe ser una instancia de Usuario', 400);
         }
         if (!(evento instanceof Evento)) {
-            throw new Error('El atributo "evento" debe ser una instancia de Evento');
+            throw new DomainError('El atributo "evento" debe ser una instancia de Evento', 400);
         }
         if (!(tipoEntrada instanceof TipoEntrada)) {
-            throw new Error('El atributo "tipoEntrada" debe ser una instancia de TipoEntrada');
+            throw new DomainError('El atributo "tipoEntrada" debe ser una instancia de TipoEntrada', 400);
+        }
+
+        const cantNum = Number(cantidad);
+        if (!Number.isInteger(cantNum) || cantNum <= 0) {
+            throw new DomainError('La cantidad debe ser un entero mayor a 0', 400);
         }
 
         this.id = id;
         this.comprador = comprador;
         this.evento = evento;
         this.tipoEntrada = tipoEntrada;
-        this.cantidad = Number(cantidad);
-        this.total = total !== undefined ? Number(total) : tipoEntrada.precio * Number(cantidad);
+        this.cantidad = cantNum;
+        this.total = total !== undefined ? Number(total) : tipoEntrada.precio * cantNum;
         this.estado = estado;
         this.mensajes = mensajes;
         this.historialEstados = historialEstados;
     }
 
+    puedeTransicionarA(nuevoEstado) {
+        const permitidos = TRANSICIONES_VALIDAS[this.estado] || [];
+        return permitidos.includes(nuevoEstado);
+    }
+
     actualizarEstado(nuevoEstado, quien = this.comprador, fechaHora = new Date()) {
+        if (!this.puedeTransicionarA(nuevoEstado)) {
+            throw new DomainError(
+                `Transición de estado inválida: no se puede pasar de ${this.estado} a ${nuevoEstado}`,
+                409
+            );
+        }
         this.estado = nuevoEstado;
         const cambio = new CambioEstadoCompra({
             compra: this,
