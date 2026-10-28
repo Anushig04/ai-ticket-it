@@ -11,4 +11,14 @@ export class CambioEstadoCompra {
         this.quien = quien;
         this.fechaHora = fechaHora instanceof Date ? fechaHora : new Date(fechaHora);
     }
+    
+    toJSON() {
+        return {
+            id: this.id,
+            compraId: this.compra?.id || null,
+            estado: this.estado,
+            quien: this.quien,
+            fechaHora: this.fechaHora
+        };
+    }
 }
