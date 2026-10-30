@@ -135,4 +135,16 @@ export class EventoService {
         this.usuarioRepo.guardar(usuario);
         return usuario.favoritos;
     }
+
+    eliminarEvento({ eventoId, organizadorId }) {
+        const evento = this.obtenerPorId(eventoId);
+        if (evento.organizador.id !== String(organizadorId)) {
+            throw new DomainError(
+                'Solo el organizador dueño puede eliminar este evento',
+                403
+            );
+        }
+        this.eventoRepo.eliminar(eventoId);
+        return { eliminado: true, id: eventoId };
+    }
 }

@@ -117,4 +117,16 @@ export class EventoController {
             next(err);
         }
     };
+
+    eliminarEvento = (req, res, next) => {
+        try {
+            const resultado = this.eventoService.eliminarEvento({
+                eventoId: req.params.id,
+                organizadorId: req.usuarioId
+            });
+            res.json(resultado);
+        } catch (err) {
+            next(err);
+        }
+    };
 }

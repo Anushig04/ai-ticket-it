@@ -34,7 +34,7 @@ describe('Fase 2 — Seed y Repositorios en Memoria', () => {
 
     test('debe cargar las cantidades mínimas requeridas por el enunciado', () => {
         expect(datos.usuarios).toHaveLength(7); // 3 organizadores + 4 compradores
-        expect(datos.categorias).toHaveLength(5); // Recital, Teatro, Festival, Conferencia, Deportes
+        expect(datos.categorias).toHaveLength(6); // Recital, Teatro, Festival, Conferencia, Deportes
         expect(datos.eventos).toHaveLength(8);
         expect(datos.compras).toHaveLength(7);
         expect(datos.resenias).toHaveLength(2);

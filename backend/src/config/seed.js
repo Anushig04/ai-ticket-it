@@ -35,6 +35,7 @@ export function cargarSeed({
     const catFestival = categoriaRepo.guardar(new Categoria({ id: 'cat-3', nombre: 'Festival', descripcion: 'Eventos de múltiples escenarios y jornadas' }));
     const catConferencia = categoriaRepo.guardar(new Categoria({ id: 'cat-4', nombre: 'Conferencia', descripcion: 'Charlas, congresos y workshops de tecnología y negocios' }));
     const catDeportes = categoriaRepo.guardar(new Categoria({ id: 'cat-5', nombre: 'Deportes', descripcion: 'Torneos, partidos y exhibiciones deportivas' }));
+    const catOtro = categoriaRepo.guardar(new Categoria({ id: 'cat-6', nombre: 'Otro', descripcion: 'Otros espectáculos, ferias y eventos especiales' }));
 
     // Helper para fechas relativas a hoy (así nunca quedan desactualizadas)
     const diasDesdeHoy = (dias) => {
@@ -51,7 +52,7 @@ export function cargarSeed({
         categoria: catRecital,
         fecha: diasDesdeHoy(15),
         organizador: org1,
-        multimedia: ['https://picsum.photos/seed/rock/800/400'],
+        multimedia: ['https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&q=80'],
         tiposEntrada: [
             new TipoEntrada({ id: 'te-1', nombre: 'General', descripcion: 'Ubicación de pie en campo', precio: 15000, cupo: 50 }),
             new TipoEntrada({ id: 'te-2', nombre: 'Platea Preferencial', descripcion: 'Butaca numerada sector central', precio: 28000, cupo: 20 }),
@@ -66,7 +67,7 @@ export function cargarSeed({
         categoria: catTeatro,
         fecha: diasDesdeHoy(8),
         organizador: org1,
-        multimedia: ['https://picsum.photos/seed/teatro/800/400'],
+        multimedia: ['https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=600&q=80'],
         tiposEntrada: [
             new TipoEntrada({ id: 'te-4', nombre: 'Pullman', descripcion: 'Planta alta con buena visibilidad', precio: 12000, cupo: 40 }),
             new TipoEntrada({ id: 'te-5', nombre: 'Platea Baja', descripcion: 'Cerca del escenario', precio: 22000, cupo: 15 })
@@ -80,7 +81,7 @@ export function cargarSeed({
         categoria: catFestival,
         fecha: diasDesdeHoy(30),
         organizador: org2,
-        multimedia: ['https://picsum.photos/seed/fest/800/400'],
+        multimedia: ['https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600&q=80'],
         tiposEntrada: [
             new TipoEntrada({ id: 'te-6', nombre: 'Abono Día 1', descripcion: 'Acceso general jornada sábado', precio: 35000, cupo: 100 }),
             new TipoEntrada({ id: 'te-7', nombre: 'Abono Full 2 Días', descripcion: 'Acceso sábado y domingo', precio: 60000, cupo: 50 }),
@@ -95,7 +96,7 @@ export function cargarSeed({
         categoria: catConferencia,
         fecha: diasDesdeHoy(20),
         organizador: org3,
-        multimedia: ['https://picsum.photos/seed/conf/800/400'],
+        multimedia: ['https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80'],
         tiposEntrada: [
             new TipoEntrada({ id: 'te-9', nombre: 'Entrada Estudiante', descripcion: 'Acceso a todas las charlas del auditorio', precio: 8000, cupo: 80 }),
             new TipoEntrada({ id: 'te-10', nombre: 'Pase Full + Workshops', descripcion: 'Incluye talleres prácticos y almuerzo', precio: 25000, cupo: 25 })
@@ -109,7 +110,7 @@ export function cargarSeed({
         categoria: catDeportes,
         fecha: diasDesdeHoy(5),
         organizador: org2,
-        multimedia: ['https://picsum.photos/seed/basket/800/400'],
+        multimedia: ['https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&q=80'],
         tiposEntrada: [
             new TipoEntrada({ id: 'te-11', nombre: 'Popular Cabecera', descripcion: 'Tribuna general sin numerar', precio: 10000, cupo: 120 }),
             new TipoEntrada({ id: 'te-12', nombre: 'Platea Lateral', descripcion: 'Asiento numerado lateral', precio: 20000, cupo: 40 }),
@@ -124,7 +125,7 @@ export function cargarSeed({
         categoria: catTeatro,
         fecha: diasDesdeHoy(12),
         organizador: org3,
-        multimedia: ['https://picsum.photos/seed/standup/800/400'],
+        multimedia: ['https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=600&q=80'],
         tiposEntrada: [
             new TipoEntrada({ id: 'te-14', nombre: 'Mesa General', descripcion: 'Ubicación compartida por orden de llegada', precio: 9500, cupo: 35 }),
             new TipoEntrada({ id: 'te-15', nombre: 'Mesa Preferencial', descripcion: 'Sector delantero exclusivo', precio: 16000, cupo: 10 })
@@ -139,7 +140,7 @@ export function cargarSeed({
         categoria: catRecital,
         fecha: diasDesdeHoy(-10), // Ya ocurrió hace 10 días
         organizador: org1,
-        multimedia: ['https://picsum.photos/seed/velas/800/400'],
+        multimedia: ['https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=600&q=80'],
         tiposEntrada: [
             new TipoEntrada({ id: 'te-16', nombre: 'Sector B', descripcion: 'Visibilidad media', precio: 18000, cupo: 30 }),
             new TipoEntrada({ id: 'te-17', nombre: 'Sector A', descripcion: 'Frente al cuarteto de cuerdas', precio: 30000, cupo: 15 })
@@ -153,7 +154,7 @@ export function cargarSeed({
         categoria: catDeportes,
         fecha: diasDesdeHoy(-5), // Ya ocurrió hace 5 días
         organizador: org2,
-        multimedia: ['https://picsum.photos/seed/tenis/800/400'],
+        multimedia: ['https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=600&q=80'],
         tiposEntrada: [
             new TipoEntrada({ id: 'te-18', nombre: 'Codo Alto', descripcion: 'Bandeja superior', precio: 22000, cupo: 60 }),
             new TipoEntrada({ id: 'te-19', nombre: 'Platea Baja', descripcion: 'Bandeja inferior', precio: 42000, cupo: 25 })
