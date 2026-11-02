@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     View,
     Text,
@@ -7,6 +7,8 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Alert,
+    KeyboardAvoidingView,
+    Platform,
     StyleSheet
 } from 'react-native';
 import {
@@ -35,6 +37,13 @@ export default function CompraDetalleScreen({ route }) {
     const [puntuacion, setPuntuacion] = useState(0);
     const [detalleResenia, setDetalleResenia] = useState('');
     const [enviandoResenia, setEnviandoResenia] = useState(false);
+    const scrollRef = useRef(null);
+
+    const scrollearAlFinal = () => {
+        setTimeout(() => {
+            scrollRef.current?.scrollToEnd({ animated: true });
+        }, 150);
+    };
 
     const cargarCompra = async () => {
         try {
@@ -100,14 +109,28 @@ export default function CompraDetalleScreen({ route }) {
     };
 
     const handleEnviarResenia = async () => {
-    if (puntuacion < 1) {
-        Alert.alert('Atención', 'Tocá las estrellas para elegir un puntaje de 1 a 5.');
-        return;
-    }
-    if (!detalleResenia.trim()) {
-        Alert.alert('Atención', 'Escribí un comentario sobre el evento.');
-        return;
-    }
+        if (puntuacion < 1) {
+            Alert.alert('Atención', 'Tocá las estrellas para elegir un puntaje de 1 a 5.');
+            return;
+        }
+        if (!detalleResenia.trim()) {
+            Alert.alert('Atención', 'Escribí un comentario sobre el evento.');
+            return;
+        }
+        try {
+            setEnviandoResenia(true);
+            await crearReseniaApi(compra.id, {
+                puntuacion,
+                detalle: detalleResenia.trim()
+            });
+            Alert.alert('¡Gracias!', 'Tu calificación fue publicada.');
+            await cargarCompra();
+        } catch (err) {
+            Alert.alert('No se pudo calificar', err.message);
+        } finally {
+            setEnviandoResenia(false);
+        }
+    };
 
     if (cargando || !compra) {
         return (
@@ -116,9 +139,8 @@ export default function CompraDetalleScreen({ route }) {
             </View>
         );
     }
-};
 
-    const esComprador = compra.comprador?.id === usuarioActual?.id;
+    const esComprador = compra.comprador?.id === usuarioActual?.id;;
     const ultimoCambio =
         compra.historialEstados?.[compra.historialEstados.length - 1];
     const cadenaHistorial = [
@@ -129,13 +151,16 @@ export default function CompraDetalleScreen({ route }) {
     ].join(' → ');
 
     return (
-        <View style={styles.contenedor}>
-            <ScrollView contentContainerStyle={styles.scroll}>
-                {/* Fila superior con badge */}
-                <View style={styles.filaEstado}>
-                    <Text style={styles.idCompra}>Compra #{compra.id}</Text>
-                    <EstadoBadge estado={compra.estado} />
-                </View>
+        <KeyboardAvoidingView
+            style={styles.contenedor}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
+            <ScrollView
+                ref={scrollRef}
+                contentContainerStyle={styles.scroll}
+                keyboardShouldPersistTaps="handled"
+            >
 
                 {/* Ticket Card Blanca */}
                 <View style={styles.ticketBlanco}>
@@ -198,29 +223,7 @@ export default function CompraDetalleScreen({ route }) {
                             </View>
                         ) : (
                             <View>
-                                <View style={styles.filaEstrellas}>
-                                    {[1, 2, 3, 4, 5].map((num) => (
-                                        <TouchableOpacity
-                                            key={num}
-                                            style={[
-                                                styles.btnEstrella,
-                                                puntuacion >= num &&
-                                                    styles.btnEstrellaActiva
-                                            ]}
-                                            onPress={() => setPuntuacion(num)}
-                                        >
-                                            <Text
-                                                style={[
-                                                    styles.btnEstrellaTexto,
-                                                    puntuacion >= num &&
-                                                        styles.btnEstrellaTextoActivo
-                                                ]}
-                                            >
-                                                ★ {num}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>                                <View style={styles.filaEstrellas}>
+                               <View style={styles.filaEstrellas}>
                                     {[1, 2, 3, 4, 5].map((num) => {
                                         const rellena = num <= puntuacion;
                                         return (
@@ -243,7 +246,6 @@ export default function CompraDetalleScreen({ route }) {
                                         );
                                     })}
                                 </View>
-
                                 <TextInput
                                     style={styles.inputResenia}
                                     placeholder="Contanos qué te pareció el evento..."
@@ -251,6 +253,7 @@ export default function CompraDetalleScreen({ route }) {
                                     value={detalleResenia}
                                     onChangeText={setDetalleResenia}
                                     multiline
+                                    onFocus={scrollearAlFinal}
                                 />
 
                                 <TouchableOpacity
@@ -311,6 +314,7 @@ export default function CompraDetalleScreen({ route }) {
                         placeholderTextColor={colors.textMuted}
                         value={textoMensaje}
                         onChangeText={setTextoMensaje}
+                        onFocus={scrollearAlFinal}
                     />
                     <TouchableOpacity
                         style={styles.botonEnviarChat}
@@ -332,7 +336,7 @@ export default function CompraDetalleScreen({ route }) {
                     </TouchableOpacity>
                 )}
             </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
     );
 }
 
