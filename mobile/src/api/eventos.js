@@ -28,3 +28,9 @@ export const agregarFavoritoApi = (eventoId) =>
 
 export const quitarFavoritoApi = (eventoId) =>
     apiRequest(`/eventos/${eventoId}/favoritos`, { method: 'DELETE' });
+
+export const eliminarEventoApi = (eventoId) =>
+    apiRequest(`/eventos/${eventoId}`, { method: 'DELETE' });
+
+export const actualizarEventoApi = (eventoId, datosEvento) =>
+    apiRequest(`/eventos/${eventoId}`, { method: 'PUT', body: datosEvento });

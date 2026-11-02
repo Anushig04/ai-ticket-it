@@ -7,6 +7,7 @@ export function crearEventosRouter(eventoController) {
     router.get('/', eventoController.listarEventos);
     router.get('/:id', eventoController.obtenerDetalle);
     router.post('/', requerirUsuarioActual, eventoController.crearEvento);
+        router.put('/:id', requerirUsuarioActual, eventoController.actualizarEvento);
     router.get('/:id/compras', requerirUsuarioActual, eventoController.listarComprasDeEvento);
     router.post('/:id/favoritos', requerirUsuarioActual, eventoController.agregarFavorito);
     router.delete('/:id/favoritos', requerirUsuarioActual, eventoController.quitarFavorito);

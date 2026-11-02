@@ -63,12 +63,14 @@ export class EventoController {
             const reseniasOrganizador = this.reseniaService.listarPorOrganizador(
                 evento.organizador.id
             );
+            const reseniasEvento = this.reseniaService.listarPorEvento(evento.id);
 
             res.json({
                 ...evento,
                 precioMinimo: evento.precioMinimo(),
                 puntajeOrganizador,
-                reseniasOrganizador
+                reseniasOrganizador,
+                reseniasEvento
             });
         } catch (err) {
             next(err);
@@ -83,6 +85,19 @@ export class EventoController {
                 organizadorId
             });
             res.status(201).json(nuevoEvento);
+        } catch (err) {
+            next(err);
+        }
+    };
+
+    actualizarEvento = (req, res, next) => {
+        try {
+            const eventoActualizado = this.eventoService.actualizarEvento({
+                ...req.body,
+                eventoId: req.params.id,
+                organizadorId: req.usuarioId
+            });
+            res.json(eventoActualizado);
         } catch (err) {
             next(err);
         }

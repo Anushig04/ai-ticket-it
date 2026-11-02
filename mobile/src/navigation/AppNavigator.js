@@ -1,11 +1,22 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useUsuario } from '../context/UsuarioContext';
 import SeleccionUsuarioScreen from '../screens/SeleccionUsuarioScreen';
 import { colors } from '../theme/colors';
+
+import CatalogoScreen from '../screens/comprador/CatalogoScreen';
+import FavoritosScreen from '../screens/comprador/FavoritosScreen';
+import EventoDetalleScreen from '../screens/comprador/EventoDetalleScreen';
+import MisComprasScreen from '../screens/comprador/MisComprasScreen';
+import CompraDetalleScreen from '../screens/comprador/CompraDetalleScreen';
+
+import MisEventosScreen from '../screens/organizador/MisEventosScreen';
+import CrearEventoScreen from '../screens/organizador/CrearEventoScreen';
+import ComprasDeEventoScreen from '../screens/organizador/ComprasDeEventoScreen';
+import { Ionicons } from '@expo/vector-icons';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -21,18 +32,6 @@ const temaOscuroApp = {
         primary: colors.accent
     }
 };
-
-function PantallaPlaceholder({ nombre }) {
-    const { usuarioActual } = useUsuario();
-    return (
-        <View style={styles.placeholder}>
-            <Text style={styles.placeholderTitulo}>{nombre}</Text>
-            <Text style={styles.placeholderSub}>
-                Usuario activo: {usuarioActual?.nombre} ({usuarioActual?.rol})
-            </Text>
-        </View>
-    );
-}
 
 function BotonCambiarUsuario() {
     const { usuarioActual, cerrarSesion } = useUsuario();
@@ -54,13 +53,14 @@ const opcionesComunesTabs = {
     },
     headerShadowVisible: false,
     headerRight: () => <BotonCambiarUsuario />,
+    tabBarShowLabel: false, // Muestra solo los íconos limpios
     tabBarStyle: {
         backgroundColor: colors.surfaceDeep,
         borderTopColor: colors.border,
         borderTopWidth: 1,
         height: 60,
         paddingBottom: 8,
-        paddingTop: 6
+        paddingTop: 8
     },
     tabBarActiveTintColor: colors.accent,
     tabBarInactiveTintColor: colors.textMuted
@@ -69,15 +69,48 @@ const opcionesComunesTabs = {
 function CompradorTabs() {
     return (
         <Tab.Navigator screenOptions={opcionesComunesTabs}>
-            <Tab.Screen name="Catalogo" options={{ title: 'Eventos' }}>
-                {() => <PantallaPlaceholder nombre="Eventos (Catálogo)" />}
-            </Tab.Screen>
-            <Tab.Screen name="MisCompras" options={{ title: 'Mis compras' }}>
-                {() => <PantallaPlaceholder nombre="Mis compras" />}
-            </Tab.Screen>
-            <Tab.Screen name="Favoritos" options={{ title: 'Favoritos' }}>
-                {() => <PantallaPlaceholder nombre="Favoritos" />}
-            </Tab.Screen>
+            <Tab.Screen
+                name="Catalogo"
+                component={CatalogoScreen}
+                options={{
+                    title: 'Eventos',
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons
+                            name={focused ? 'ticket' : 'ticket-outline'}
+                            size={24}
+                            color={color}
+                        />
+                    )
+                }}
+            />
+            <Tab.Screen
+                name="MisCompras"
+                component={MisComprasScreen}
+                options={{
+                    title: 'Mis compras',
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons
+                            name={focused ? 'cart' : 'cart-outline'}
+                            size={24}
+                            color={color}
+                        />
+                    )
+                }}
+            />
+            <Tab.Screen
+                name="Favoritos"
+                component={FavoritosScreen}
+                options={{
+                    title: 'Favoritos',
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons
+                            name={focused ? 'heart' : 'heart-outline'}
+                            size={24}
+                            color={color}
+                        />
+                    )
+                }}
+            />
         </Tab.Navigator>
     );
 }
@@ -85,12 +118,30 @@ function CompradorTabs() {
 function OrganizadorTabs() {
     return (
         <Tab.Navigator screenOptions={opcionesComunesTabs}>
-            <Tab.Screen name="MisEventos" options={{ title: 'Mis eventos' }}>
-                {() => <PantallaPlaceholder nombre="Mis eventos (Organizador)" />}
-            </Tab.Screen>
-            <Tab.Screen name="CrearEvento" options={{ title: 'Crear evento' }}>
-                {() => <PantallaPlaceholder nombre="Crear evento" />}
-            </Tab.Screen>
+            <Tab.Screen
+                name="MisEventos"
+                component={MisEventosScreen}
+                options={{
+                    title: 'Mis eventos',
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons
+                            name={focused ? 'ticket' : 'ticket-outline'}
+                            size={24}
+                            color={color}
+                        />
+                    )
+                }}
+            />
+            <Tab.Screen
+                name="CrearEvento"
+                component={CrearEventoScreen}
+                options={{
+                    title: 'Crear evento',
+                    tabBarIcon: ({ color }) => (
+                        <Ionicons name="add" size={30} color={color} />
+                    )
+                }}
+            />
         </Tab.Navigator>
     );
 }
@@ -127,29 +178,32 @@ export default function AppNavigator() {
                         options={{ headerShown: false }}
                     />
                 )}
+                <Stack.Screen
+                    name="EventoDetalle"
+                    component={EventoDetalleScreen}
+                    options={{ title: 'Detalle y compra' }}
+                />
+                <Stack.Screen
+                    name="CompraDetalle"
+                    component={CompraDetalleScreen}
+                    options={{ title: 'Seguimiento y chat' }}
+                />
+                <Stack.Screen
+                    name="ComprasDeEvento"
+                    component={ComprasDeEventoScreen}
+                    options={{ title: 'Compras del evento' }}
+                />
+                <Stack.Screen
+                    name="EditarEvento"
+                    component={CrearEventoScreen}
+                    options={{ title: 'Editar evento' }}
+                />
             </Stack.Navigator>
         </NavigationContainer>
     );
 }
 
 const styles = StyleSheet.create({
-    placeholder: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 24,
-        backgroundColor: colors.background
-    },
-    placeholderTitulo: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: colors.text,
-        marginBottom: 8
-    },
-    placeholderSub: {
-        fontSize: 14,
-        color: colors.textSecondary
-    },
     botonIcono: {
         marginRight: 16,
         backgroundColor: colors.surfaceDeep,

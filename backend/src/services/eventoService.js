@@ -70,6 +70,79 @@ export class EventoService {
         return this.eventoRepo.guardar(nuevoEvento);
     }
 
+        actualizarEvento({
+        eventoId,
+        organizadorId,
+        nombre,
+        descripcion,
+        categoriaId,
+        fecha,
+        tiposEntrada,
+        multimedia
+    }) {
+        const evento = this.obtenerPorId(eventoId);
+
+        if (evento.organizador.id !== String(organizadorId)) {
+            throw new DomainError(
+                'Solo el organizador dueño puede editar este evento',
+                403
+            );
+        }
+
+        if (categoriaId) {
+            const categoria = this.categoriaRepo.buscarPorId(categoriaId);
+            if (!categoria) {
+                throw new DomainError('Categoría no encontrada', 404);
+            }
+            evento.categoria = categoria;
+        }
+
+        if (nombre !== undefined) {
+            if (!nombre.trim()) throw new DomainError('El nombre no puede estar vacío', 400);
+            evento.nombre = nombre.trim();
+        }
+
+        if (descripcion !== undefined) {
+            if (!descripcion.trim()) throw new DomainError('La descripción no puede estar vacía', 400);
+            evento.descripcion = descripcion.trim();
+        }
+
+        if (fecha !== undefined) {
+            const fechaObj = new Date(fecha);
+            if (Number.isNaN(fechaObj.getTime())) {
+                throw new DomainError('La fecha del evento no es válida', 400);
+            }
+            evento.fecha = fechaObj;
+        }
+
+        if (Array.isArray(multimedia)) {
+            evento.multimedia = multimedia;
+        }
+
+        if (Array.isArray(tiposEntrada)) {
+            if (tiposEntrada.length === 0) {
+                throw new DomainError('El evento debe tener al menos un tipo de entrada', 400);
+            }
+            evento.tiposEntrada = tiposEntrada.map((t) => {
+                if (!t.nombre || Number(t.precio) < 0 || Number(t.cupo) < 0) {
+                    throw new DomainError(
+                        'Cada tipo de entrada debe tener nombre, precio >= 0 y cupo >= 0',
+                        400
+                    );
+                }
+                return new TipoEntrada({
+                    id: t.id || null,
+                    nombre: t.nombre.trim(),
+                    descripcion: t.descripcion ? t.descripcion.trim() : '',
+                    precio: Number(t.precio),
+                    cupo: Number(t.cupo)
+                });
+            });
+        }
+
+        return this.eventoRepo.guardar(evento);
+    }
+
     listarEventos({ texto, categoriaId, minPrecio, maxPrecio, orden } = {}) {
         let resultado = texto
             ? this.eventoRepo.buscarPorTexto(texto)

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
+    Image,
     TouchableOpacity,
     FlatList,
     ActivityIndicator,
@@ -10,7 +11,17 @@ import {
 import { obtenerUsuarios } from '../api/eventos';
 import { API_BASE_URL } from '../api/client';
 import { useUsuario } from '../context/UsuarioContext';
-import { colors, obtenerIniciales, colorPorId } from '../theme/colors';
+import { colors } from '../theme/colors';
+
+const AVATARES_USUARIOS = {
+    'org-1': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
+    'org-2': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+    'org-3': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80',
+    'comp-1': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
+    'comp-2': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',
+    'comp-3': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80',
+    'comp-4': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&q=80'
+};
 
 export default function SeleccionUsuarioScreen() {
     const { seleccionarUsuario } = useUsuario();
@@ -71,43 +82,53 @@ export default function SeleccionUsuarioScreen() {
                 contentContainerStyle={{ paddingBottom: 28 }}
                 renderItem={({ item }) => {
                     const esOrg = item.rol === 'organizador';
-                    const iniciales = obtenerIniciales(`${item.nombre} ${item.apellido}`);
-                    const avatarColor = colorPorId(item.id);
+                    const fotoUri =
+                        AVATARES_USUARIOS[item.id] ||
+                        `https://i.pravatar.cc/150?u=${item.id}`;
 
                     return (
                         <TouchableOpacity
-                            style={styles.card}
-                            activeOpacity={0.8}
+                            style={styles.filaChat}
+                            activeOpacity={0.75}
                             onPress={() => seleccionarUsuario(item)}
                         >
-                            <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
-                                <Text style={styles.avatarTexto}>{iniciales}</Text>
+                            {/* Foto circular con puntito verde tipo WhatsApp */}
+                            <View style={styles.avatarContainer}>
+                                <Image
+                                    source={{ uri: fotoUri }}
+                                    style={styles.avatarCircular}
+                                />
                             </View>
 
-                            <View style={styles.cardBody}>
-                                <Text style={styles.rolDestacado}>
-                                    {esOrg ? 'Organizador de eventos' : 'Comprador'}
-                                </Text>
+                            {/* Nombre y subtítulo en el medio */}
+                            <View style={styles.infoCentro}>
                                 <Text style={styles.nombre} numberOfLines={1}>
                                     {item.nombre} {item.apellido}
                                 </Text>
-                                <View style={styles.filaInferior}>
-                                    <View
-                                        style={[
-                                            styles.badge,
-                                            esOrg ? styles.badgeOrg : styles.badgeComp
-                                        ]}
-                                    >
-                                        <Text
-                                            style={[
-                                                styles.badgeTexto,
-                                                esOrg ? styles.badgeTextoOrg : styles.badgeTextoComp
-                                            ]}
-                                        >
-                                            {esOrg ? 'Organizador' : 'Comprador'}
-                                        </Text>
-                                    </View>
-                                </View>
+                                <Text style={styles.subtexto} numberOfLines={1}>
+                                    {esOrg
+                                        ? 'Publicar eventos y gestionar ventas'
+                                        : 'Explorar catálogo y comprar entradas'}
+                                </Text>
+                            </View>
+
+                            {/* Badge a la derecha */}
+                            <View
+                                style={[
+                                    styles.badge,
+                                    esOrg ? styles.badgeOrg : styles.badgeComp
+                                ]}
+                            >
+                                <Text
+                                    style={[
+                                        styles.badgeTexto,
+                                        esOrg
+                                            ? styles.badgeTextoOrg
+                                            : styles.badgeTextoComp
+                                    ]}
+                                >
+                                    {esOrg ? 'Organizador' : 'Comprador'}
+                                </Text>
                             </View>
                         </TouchableOpacity>
                     );
@@ -147,50 +168,56 @@ const styles = StyleSheet.create({
     subtitulo: {
         fontSize: 14,
         color: colors.textSecondary,
-        marginBottom: 20
+        marginBottom: 16
     },
-    card: {
+    filaChat: {
         backgroundColor: colors.surface,
         borderRadius: 16,
-        marginBottom: 12,
-        flexDirection: 'row',
-        overflow: 'hidden',
-        minHeight: 84
-    },
-    avatar: {
-        width: 72,
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    avatarTexto: {
-        color: colors.text,
-        fontSize: 18,
-        fontWeight: '600'
-    },
-    cardBody: {
-        flex: 1,
         paddingVertical: 12,
         paddingHorizontal: 14,
-        justifyContent: 'center'
+        marginBottom: 10,
+        flexDirection: 'row',
+        alignItems: 'center'
     },
-    rolDestacado: {
-        fontSize: 12,
-        color: colors.accent,
-        marginBottom: 2
+    avatarContainer: {
+        position: 'relative',
+        marginRight: 14
+    },
+    avatarCircular: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: colors.surfaceDeep,
+        borderWidth: 1.5,
+        borderColor: colors.border
+    },
+    puntoEstado: {
+        position: 'absolute',
+        bottom: 1,
+        right: 1,
+        width: 13,
+        height: 13,
+        borderRadius: 7,
+        borderWidth: 2,
+        borderColor: colors.surface
+    },
+    infoCentro: {
+        flex: 1,
+        marginRight: 10
     },
     nombre: {
         fontSize: 16,
         fontWeight: '600',
         color: colors.text,
-        marginBottom: 6
+        marginBottom: 3
     },
-    filaInferior: {
-        flexDirection: 'row',
-        alignItems: 'center'
+    subtexto: {
+        fontSize: 13,
+        color: colors.textSecondary
     },
     badge: {
         paddingHorizontal: 10,
-        paddingVertical: 3,
+        paddingVertical: 4,
         borderRadius: 12
     },
     badgeComp: {
