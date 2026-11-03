@@ -152,7 +152,7 @@ export function cargarSeed({
 
     const ev8 = eventoRepo.guardar(new Evento({
         id: 'ev-8',
-        nombre: ' exhibición Internacional de Tenis',
+        nombre: ' Exhibición Internacional de Tenis',
         descripcion: 'Partido exhibición entre figuras del circuito profesional.',
         categoria: catDeportes,
         fecha: diasDesdeHoy(-5), // Ya ocurrió hace 5 días
