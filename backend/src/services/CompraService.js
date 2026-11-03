@@ -61,20 +61,8 @@ export class CompraService {
             throw new DomainError('Solo el comprador puede cancelar su compra', 403);
         }
 
-        if (compra.estado === EstadoCompra.UTILIZADA) {
-            throw new DomainError('No se puede cancelar una compra ya utilizada', 409);
-        }
-
-        if (
-            compra.estado === EstadoCompra.CANCELADA ||
-            compra.estado === EstadoCompra.REEMBOLSADA
-        ) {
-            throw new DomainError('La compra ya se encuentra cancelada', 409);
-        }
-
-        if (compra.evento.fecha.getTime() <= fechaActual.getTime()) {
-            throw new DomainError('No se puede cancelar una compra si el evento ya se realizó', 409);
-        }
+        // Delegamos la validación de invariantes al Information Expert (Compra) para evitar Feature Envy
+        compra.validarCancelacion(fechaActual);
 
         const nuevoEstado =
             compra.estado === EstadoCompra.CONFIRMADA
@@ -142,6 +130,17 @@ export class CompraService {
         const compra = this.compraRepo.buscarPorId(compraId);
         if (!compra) {
             throw new DomainError('Compra no encontrada', 404);
+        }
+        return compra;
+    }
+
+    obtenerDetalleParaUsuario({ compraId, usuarioId }) {
+        const compra = this.obtenerPorId(compraId);
+        const esComprador = compra.comprador.id === String(usuarioId);
+        const esOrganizador = compra.evento.organizador.id === String(usuarioId);
+
+        if (!esComprador && !esOrganizador) {
+            throw new DomainError('No tenés autorización para ver el detalle de esta compra', 403);
         }
         return compra;
     }

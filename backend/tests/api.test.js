@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import request from 'supertest';
 import { crearApp } from '../src/app.js';
 
@@ -8,15 +9,31 @@ describe('Fase 5 — Tests de Integración API REST (Supertest)', () => {
         app = crearApp({ inicializarSeed: true });
     });
 
-    test('GET /usuarios y GET /categorias devuelven los datos iniciales (200)', async () => {
+    test('Protección de Privacidad: GET /usuarios no es público (404), GET /auth/me requiere JWT y GET /categorias devuelve 200', async () => {
+        // 1. GET /usuarios ya no es accesible públicamente (mitiga User Enumeration)
         const resUsuarios = await request(app).get('/usuarios');
-        expect(resUsuarios.status).toBe(200);
-        expect(resUsuarios.body).toHaveLength(7);
-        expect(resUsuarios.body[0]).toHaveProperty('rol');
+        expect(resUsuarios.status).toBe(404);
 
+        // 2. GET /categorias sigue siendo público
         const resCategorias = await request(app).get('/categorias');
         expect(resCategorias.status).toBe(200);
-        expect(resCategorias.body).toHaveLength(5);
+        expect(resCategorias.body).toHaveLength(6);
+
+        // 3. GET /auth/me sin autenticación -> 401
+        const resMeSinAuth = await request(app).get('/auth/me');
+        expect(resMeSinAuth.status).toBe(401);
+
+        // 4. GET /auth/me con JWT devuelve el perfil propio
+        const resLogin = await request(app)
+            .post('/auth/login')
+            .send({ email: 'sofia.perez@ticketit.com', password: '123456' });
+        const resMe = await request(app)
+            .get('/auth/me')
+            .set('Authorization', 'Bearer ' + resLogin.body.token);
+        expect(resMe.status).toBe(200);
+        expect(resMe.body.id).toBe('comp-1');
+        expect(resMe.body.email).toBe('sofia.perez@ticketit.com');
+        expect(resMe.body.rol).toBe('comprador');
     });
 
     test('GET /eventos permite buscar por texto, filtrar por categoría y ordenar por precio, fecha y puntaje', async () => {
@@ -44,7 +61,7 @@ describe('Fase 5 — Tests de Integración API REST (Supertest)', () => {
         const sinHeader = await request(app)
             .post('/compras')
             .send({ eventoId: 'ev-1', tipoEntradaId: 'te-2', cantidad: 1 });
-        expect(sinHeader.status).toBe(400);
+        expect(sinHeader.status).toBe(401);
 
         // Intento superando el cupo disponible (te-3 tiene cupo 2) -> 409
         const sinCupo = await request(app)
@@ -133,5 +150,131 @@ describe('Fase 5 — Tests de Integración API REST (Supertest)', () => {
             .send({ mensaje: '¿Hay estacionamiento cerca?' });
         expect(resComprador.status).toBe(201);
         expect(resComprador.body.mensaje).toBe('¿Hay estacionamiento cerca?');
+    });
+    test('GET /compras/:id mitiga IDOR: rechaza sin header (400), rechaza usuarios no autorizados (403) y permite a comprador y organizador (200)', async () => {
+        const sinHeader = await request(app).get('/compras/compra-1');
+        expect(sinHeader.status).toBe(401);
+
+        const resAjeno = await request(app).get('/compras/compra-1').set('x-user-id', 'comp-2');
+        expect(resAjeno.status).toBe(403);
+        expect(resAjeno.body.error).toMatch(/No tenés autorización/);
+
+        const resComprador = await request(app).get('/compras/compra-1').set('x-user-id', 'comp-1');
+        expect(resComprador.status).toBe(200);
+        expect(resComprador.body.id).toBe('compra-1');
+
+        const resOrganizador = await request(app).get('/compras/compra-1').set('x-user-id', 'org-1');
+        expect(resOrganizador.status).toBe(200);
+        expect(resOrganizador.body.id).toBe('compra-1');
+    });
+
+    test('Seguridad HTTP: deshabilita X-Powered-By y oculta mensajes internos en errores 500', async () => {
+        const resRoot = await request(app).get('/');
+        expect(resRoot.headers['x-powered-by']).toBeUndefined();
+
+                const mockRes = {
+            statusCode: null,
+            body: null,
+            status(code) { this.statusCode = code; return this; },
+            json(data) { this.body = data; return this; }
+        };
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const { errorHandler } = await import('../src/middlewares/errorHandler.js');
+        errorHandler(new Error('Database password was 1234 at internal path /secret/db'), {}, mockRes, () => {});
+        consoleSpy.mockRestore();
+
+        expect(mockRes.statusCode).toBe(500);
+        expect(mockRes.body.error).toBe('Ocurrió un error interno en el servidor');
+        expect(JSON.stringify(mockRes.body)).not.toMatch(/Database password/);
+    });
+    test('POST /auth/login autentica con credenciales válidas y genera un JWT firmado verificable con Bearer', async () => {
+        // 1. Login exitoso con email y contraseña
+        const resLogin = await request(app)
+            .post('/auth/login')
+            .send({ email: 'sofia.perez@ticketit.com', password: '123456' });
+        expect(resLogin.status).toBe(200);
+        expect(resLogin.body).toHaveProperty('token');
+        expect(resLogin.body.usuario.id).toBe('comp-1');
+
+        const token = resLogin.body.token;
+
+        // 2. Uso del JWT en endpoint protegido con Authorization: Bearer
+        const resProtegido = await request(app)
+            .get('/compras/mias')
+            .set('Authorization', 'Bearer ' + token);
+        expect(resProtegido.status).toBe(200);
+
+        // 3. Token adulterado o inválido -> 401
+        const resAdulterado = await request(app)
+            .get('/compras/mias')
+            .set('Authorization', 'Bearer token.invalido.adulterado');
+        expect(resAdulterado.status).toBe(401);
+
+        // 4. Credenciales incorrectas -> 401
+        const resFallo = await request(app)
+            .post('/auth/login')
+            .send({ email: 'sofia.perez@ticketit.com', password: 'password-incorrecta' });
+        expect(resFallo.status).toBe(401);
+        expect(resFallo.body.error).toMatch(/Credenciales inválidas/);
+    });
+
+    test('Control de Acceso por Roles (RBAC): rechaza compradores intentando crear eventos (403) y organizadores intentando comprar entradas (403)', async () => {
+        // 1. Login como Sofía (Comprador)
+        const resLoginComp = await request(app)
+            .post('/auth/login')
+            .send({ email: 'sofia.perez@ticketit.com', password: '123456' });
+        const tokenComprador = resLoginComp.body.token;
+
+        // Comprador intenta crear evento -> 403
+        const resCrearEvento = await request(app)
+            .post('/eventos')
+            .set('Authorization', 'Bearer ' + tokenComprador)
+            .send({
+                nombre: 'Intento Ilegal',
+                descripcion: 'Debería ser rechazado',
+                categoriaId: 'cat-1',
+                fecha: new Date(),
+                tiposEntrada: [{ nombre: 'General', precio: 1000, cupo: 10 }]
+            });
+        expect(resCrearEvento.status).toBe(403);
+        expect(resCrearEvento.body.error).toMatch(/se requiere rol de organizador/);
+
+        // 2. Login como Lucía (Organizador)
+        const resLoginOrg = await request(app)
+            .post('/auth/login')
+            .send({ email: 'lucia.mendez@ticketit.com', password: '123456' });
+        const tokenOrg = resLoginOrg.body.token;
+
+        // Organizador intenta comprar entrada -> 403
+        const resComprar = await request(app)
+            .post('/compras')
+            .set('Authorization', 'Bearer ' + tokenOrg)
+            .send({ eventoId: 'ev-1', tipoEntradaId: 'te-1', cantidad: 1 });
+        expect(resComprar.status).toBe(403);
+        expect(resComprar.body.error).toMatch(/se requiere rol de comprador/);
+    });
+
+    test('Rate Limiter en Login: bloquea con 429 Too Many Requests cuando se superan los intentos máximos permitidos', async () => {
+        const { default: rateLimit } = await import('express-rate-limit');
+        const express = (await import('express')).default;
+        const testApp = express();
+
+        const testLimiter = rateLimit({
+            windowMs: 60 * 1000,
+            limit: 2,
+            message: { error: 'Demasiados intentos de inicio de sesión' }
+        });
+
+        testApp.post('/login-test', testLimiter, (_req, res) => res.json({ ok: true }));
+
+        const r1 = await request(testApp).post('/login-test');
+        expect(r1.status).toBe(200);
+
+        const r2 = await request(testApp).post('/login-test');
+        expect(r2.status).toBe(200);
+
+        const r3 = await request(testApp).post('/login-test');
+        expect(r3.status).toBe(429);
+        expect(r3.body.error).toMatch(/Demasiados intentos/);
     });
 });

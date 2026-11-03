@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import { Usuario } from '../domain/Usuario.js';
 import { Categoria } from '../domain/Categoria.js';
 import { TipoEntrada } from '../domain/TipoEntrada.js';
@@ -19,15 +20,17 @@ export function cargarSeed({
     compraRepo.limpiar();
     reseniaRepo.limpiar();
 
-    // 1. USUARIOS: 3 Organizadores y 4 Compradores
-    const org1 = usuarioRepo.guardar(new Usuario({ id: 'org-1', nombre: 'Lucía', apellido: 'Méndez (Prod. Indie)' }));
-    const org2 = usuarioRepo.guardar(new Usuario({ id: 'org-2', nombre: 'Martín', apellido: 'Gómez (Estadio Live)' }));
-    const org3 = usuarioRepo.guardar(new Usuario({ id: 'org-3', nombre: 'Carolina', apellido: 'Soler (Tech & Arte)' }));
+    // 1. USUARIOS: 3 Organizadores y 4 Compradores con credenciales y HASH (bcrypt)
+    const defaultPasswordHash = bcrypt.hashSync('123456', 10);
 
-    const comp1 = usuarioRepo.guardar(new Usuario({ id: 'comp-1', nombre: 'Sofía', apellido: 'Pérez' }));
-    const comp2 = usuarioRepo.guardar(new Usuario({ id: 'comp-2', nombre: 'Mateo', apellido: 'Rodríguez' }));
-    const comp3 = usuarioRepo.guardar(new Usuario({ id: 'comp-3', nombre: 'Valentina', apellido: 'López' }));
-    const comp4 = usuarioRepo.guardar(new Usuario({ id: 'comp-4', nombre: 'Lucas', apellido: 'Fernández' }));
+    const org1 = usuarioRepo.guardar(new Usuario({ id: 'org-1', nombre: 'Lucía', apellido: 'Méndez (Prod. Indie)', email: 'lucia.mendez@ticketit.com', passwordHash: defaultPasswordHash }));
+    const org2 = usuarioRepo.guardar(new Usuario({ id: 'org-2', nombre: 'Martín', apellido: 'Gómez (Estadio Live)', email: 'martin.gomez@ticketit.com', passwordHash: defaultPasswordHash }));
+    const org3 = usuarioRepo.guardar(new Usuario({ id: 'org-3', nombre: 'Carolina', apellido: 'Soler (Tech & Arte)', email: 'carolina.soler@ticketit.com', passwordHash: defaultPasswordHash }));
+
+    const comp1 = usuarioRepo.guardar(new Usuario({ id: 'comp-1', nombre: 'Sofía', apellido: 'Pérez', email: 'sofia.perez@ticketit.com', passwordHash: defaultPasswordHash }));
+    const comp2 = usuarioRepo.guardar(new Usuario({ id: 'comp-2', nombre: 'Mateo', apellido: 'Rodríguez', email: 'mateo.rodriguez@ticketit.com', passwordHash: defaultPasswordHash }));
+    const comp3 = usuarioRepo.guardar(new Usuario({ id: 'comp-3', nombre: 'Valentina', apellido: 'López', email: 'valentina.lopez@ticketit.com', passwordHash: defaultPasswordHash }));
+    const comp4 = usuarioRepo.guardar(new Usuario({ id: 'comp-4', nombre: 'Lucas', apellido: 'Fernández', email: 'lucas.fernandez@ticketit.com', passwordHash: defaultPasswordHash }));
 
     // 2. CATEGORÍAS (5)
     const catRecital = categoriaRepo.guardar(new Categoria({ id: 'cat-1', nombre: 'Recital', descripcion: 'Shows musicales en vivo de bandas y solistas' }));

@@ -11,10 +11,12 @@ import { EventoService } from './services/EventoService.js';
 import { CompraService } from './services/CompraService.js';
 import { MensajeService } from './services/MensajeService.js';
 import { ReseniaService } from './services/ReseniaService.js';
+import { AuthService } from './services/AuthService.js';
 
 import { EventoController } from './controllers/EventoController.js';
 import { CompraController } from './controllers/CompraController.js';
 import { ReseniaController } from './controllers/ReseniaController.js';
+import { AuthController } from './controllers/AuthController.js';
 
 import { cargarSeed } from './config/seed.js';
 import { extraerUsuarioActual } from './middlewares/usuarioActual.js';
@@ -23,6 +25,7 @@ import { crearRouter } from './routes/index.js';
 
 export function crearApp({ inicializarSeed = true } = {}) {
     const app = express();
+    app.disable('x-powered-by');
 
     app.use(cors());
     app.use(express.json({ limit: '10mb' }));
@@ -55,6 +58,7 @@ export function crearApp({ inicializarSeed = true } = {}) {
     });
     const compraService = new CompraService({ compraRepo, eventoRepo, usuarioRepo });
     const mensajeService = new MensajeService({ compraRepo, usuarioRepo });
+    const authService = new AuthService({ usuarioRepo });
 
     // 3. Controllers
     const eventoController = new EventoController({
@@ -70,13 +74,15 @@ export function crearApp({ inicializarSeed = true } = {}) {
         reseniaService
     });
     const reseniaController = new ReseniaController({ reseniaService });
+    const authController = new AuthController({ authService });
 
     // 4. Rutas y manejo de errores
     app.use(
         crearRouter({
             eventoController,
             compraController,
-            reseniaController
+            reseniaController,
+            authController
         })
     );
     app.use(errorHandler);

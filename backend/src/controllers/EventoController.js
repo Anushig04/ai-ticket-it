@@ -9,10 +9,13 @@ export class EventoController {
 
     listarUsuarios = (_req, res, next) => {
         try {
-            const usuarios = this.usuarioRepo.listar().map((u) => ({
-                ...u,
-                rol: String(u.id).startsWith('org-') ? 'organizador' : 'comprador'
-            }));
+            const usuarios = this.usuarioRepo.listar().map((u) => {
+                const datos = u.toJSON ? u.toJSON() : u;
+                return {
+                    ...datos,
+                    rol: String(u.id).startsWith('org-') ? 'organizador' : 'comprador'
+                };
+            });
             res.json(usuarios);
         } catch (err) {
             next(err);

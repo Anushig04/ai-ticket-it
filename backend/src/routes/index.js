@@ -2,20 +2,24 @@ import { Router } from 'express';
 import { crearEventosRouter } from './Eventos.routes.js';
 import { crearComprasRouter } from './Compras.routes.js';
 import { crearOrganizadoresRouter } from './Organizadores.routes.js';
+import { crearAuthRouter } from './Auth.routes.js';
 
-export function crearRouter({ eventoController, compraController, reseniaController }) {
+export function crearRouter({ eventoController, compraController, reseniaController, authController }) {
     const router = Router();
 
-    //mensaje bienvenida
+    // Mensaje de bienvenida y metadatos
     router.get('/', (_req, res) => {
         res.json({
             status: 'ok',
             nombre: 'AI Ticket It API',
-            endpoints: ['/usuarios', '/categorias', '/eventos', '/compras/mias']
+            endpoints: ['/auth/login', '/auth/me', '/categorias', '/eventos', '/compras/mias']
         });
     });
 
-    router.get('/usuarios', eventoController.listarUsuarios);
+    if (authController) {
+        router.use('/auth', crearAuthRouter(authController));
+    }
+
     router.get('/categorias', eventoController.listarCategorias);
 
     router.use('/eventos', crearEventosRouter(eventoController));

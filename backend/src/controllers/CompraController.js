@@ -40,7 +40,10 @@ export class CompraController {
 
     obtenerDetalle = (req, res, next) => {
         try {
-            const compra = this.compraService.obtenerPorId(req.params.id);
+            const compra = this.compraService.obtenerDetalleParaUsuario({
+                compraId: req.params.id,
+                usuarioId: req.usuarioId
+            });
             res.json(this._formatearCompra(compra));
         } catch (err) {
             next(err);

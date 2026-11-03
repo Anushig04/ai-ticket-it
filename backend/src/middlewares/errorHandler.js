@@ -7,8 +7,8 @@ export function errorHandler(err, _req, res, _next) {
         });
     }
 
-    console.error(err);
+    console.error('[Error No Controlado]:', err);
     return res.status(500).json({
-        error: err.message || 'Error interno del servidor'
+        error: 'Ocurrió un error interno en el servidor'
     });
 }

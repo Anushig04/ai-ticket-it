@@ -1,118 +1,186 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
+    TextInput,
     Image,
     TouchableOpacity,
     FlatList,
     ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
     StyleSheet
 } from 'react-native';
-import { obtenerUsuarios } from '../api/eventos';
-import { API_BASE_URL } from '../api/client';
 import { useUsuario } from '../context/UsuarioContext';
 import { colors } from '../theme/colors';
 
-const AVATARES_USUARIOS = {
-    'org-1': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
-    'org-2': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
-    'org-3': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80',
-    'comp-1': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
-    'comp-2': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',
-    'comp-3': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80',
-    'comp-4': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&q=80'
-};
+const CUENTAS_DEMO = [
+    {
+        id: 'comp-1',
+        nombre: 'Sofía',
+        apellido: 'Pérez',
+        email: 'sofia.perez@ticketit.com',
+        rol: 'comprador',
+        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
+        subtexto: 'Explorar catálogo, reservar y favoritos'
+    },
+    {
+        id: 'comp-2',
+        nombre: 'Mateo',
+        apellido: 'Rodríguez',
+        email: 'mateo.rodriguez@ticketit.com',
+        rol: 'comprador',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',
+        subtexto: 'Comprador con compras previas y chat'
+    },
+    {
+        id: 'org-1',
+        nombre: 'Lucía',
+        apellido: 'Méndez (Prod. Indie)',
+        email: 'lucia.mendez@ticketit.com',
+        rol: 'organizador',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
+        subtexto: 'Publicar eventos, monitorear y gestionar ventas'
+    },
+    {
+        id: 'org-2',
+        nombre: 'Martín',
+        apellido: 'Gómez (Estadio Live)',
+        email: 'martin.gomez@ticketit.com',
+        rol: 'organizador',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+        subtexto: 'Gestión de festivales y acreditaciones'
+    }
+];
 
 export default function SeleccionUsuarioScreen() {
-    const { seleccionarUsuario } = useUsuario();
-    const [usuarios, setUsuarios] = useState([]);
-    const [cargando, setCargando] = useState(true);
+    const { loginConPassword } = useUsuario();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [cargando, setCargando] = useState(false);
     const [error, setError] = useState(null);
 
-    const cargarUsuarios = async () => {
+    const ejecutarLogin = async (emailLogin, passLogin) => {
         try {
             setCargando(true);
             setError(null);
-            const data = await obtenerUsuarios();
-            setUsuarios(data);
-        } catch (_err) {
-            setError(
-                `No se pudo conectar con ${API_BASE_URL}.\nVerificá que el back-end esté corriendo con "npm run dev".`
-            );
+            await loginConPassword(emailLogin, passLogin);
+        } catch (err) {
+            setError(err.message || 'Error al iniciar sesión');
         } finally {
             setCargando(false);
         }
     };
 
-    useEffect(() => {
-        cargarUsuarios();
-    }, []);
+    const handleFormSubmit = () => {
+        if (!email.trim() || !password) {
+            setError('Ingresá email y contraseña para continuar');
+            return;
+        }
+        ejecutarLogin(email.trim(), password);
+    };
 
-    if (cargando) {
-        return (
-            <View style={styles.centrado}>
-                <ActivityIndicator size="large" color={colors.accent} />
-                <Text style={styles.subtitulo}>Conectando a {API_BASE_URL}...</Text>
-            </View>
-        );
-    }
-
-    if (error) {
-        return (
-            <View style={styles.centrado}>
-                <Text style={styles.errorTexto}>{error}</Text>
-                <TouchableOpacity style={styles.botonPrincipal} onPress={cargarUsuarios}>
-                    <Text style={styles.botonPrincipalTexto}>Reintentar conexión</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    }
+    const handleSelectDemo = (cuenta) => {
+        setEmail(cuenta.email);
+        setPassword('123456');
+        ejecutarLogin(cuenta.email, '123456');
+    };
 
     return (
-        <View style={styles.contenedor}>
-            <Text style={styles.etiquetaSuperior}>ENTRADAS A UN CLICK</Text>
-            <Text style={styles.titulo}>AI Ticket It</Text>
-            <Text style={styles.subtitulo}>
-                Elegí con qué usuario querés ingresar:
-            </Text>
-
+        <KeyboardAvoidingView
+            style={styles.contenedor}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
             <FlatList
-                data={usuarios}
+                data={CUENTAS_DEMO}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={{ paddingBottom: 28 }}
+                contentContainerStyle={{ paddingBottom: 36 }}
+                ListHeaderComponent={
+                    <View style={styles.headerForm}>
+                        <Text style={styles.etiquetaSuperior}>ENTRADAS A UN CLICK</Text>
+                        <Text style={styles.titulo}>AI Ticket It</Text>
+                        <Text style={styles.subtitulo}>
+                            Iniciá sesión de forma segura con tu cuenta:
+                        </Text>
+
+                        {/* Formulario de Login Estándar */}
+                        <View style={styles.cajaFormulario}>
+                            <Text style={styles.labelInput}>CORREO ELECTRÓNICO</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="ejemplo: sofia.perez@ticketit.com"
+                                placeholderTextColor={colors.textSecondary}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                value={email}
+                                onChangeText={setEmail}
+                            />
+
+                            <Text style={styles.labelInput}>CONTRASEÑA</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="••••••••"
+                                placeholderTextColor={colors.textSecondary}
+                                secureTextEntry
+                                value={password}
+                                onChangeText={setPassword}
+                            />
+
+                            {error && <Text style={styles.errorTexto}>{error}</Text>}
+
+                            <TouchableOpacity
+                                style={styles.botonIngresar}
+                                onPress={handleFormSubmit}
+                                disabled={cargando}
+                            >
+                                {cargando ? (
+                                    <ActivityIndicator color={colors.ticketText} />
+                                ) : (
+                                    <Text style={styles.botonIngresarTexto}>
+                                        Iniciar sesión con JWT
+                                    </Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Separador de accesos rápidos para la Demo del Video */}
+                        <View style={styles.divisorContainer}>
+                            <View style={styles.lineaDivisoria} />
+                            <Text style={styles.divisorTexto}>
+                                O INGRESÁ CON UNA CUENTA DEMO (1 CLICK)
+                            </Text>
+                            <View style={styles.lineaDivisoria} />
+                        </View>
+                    </View>
+                }
                 renderItem={({ item }) => {
                     const esOrg = item.rol === 'organizador';
-                    const fotoUri =
-                        AVATARES_USUARIOS[item.id] ||
-                        `https://i.pravatar.cc/150?u=${item.id}`;
 
                     return (
                         <TouchableOpacity
                             style={styles.filaChat}
                             activeOpacity={0.75}
-                            onPress={() => seleccionarUsuario(item)}
+                            onPress={() => handleSelectDemo(item)}
                         >
-                            {/* Foto circular con puntito verde tipo WhatsApp */}
                             <View style={styles.avatarContainer}>
                                 <Image
-                                    source={{ uri: fotoUri }}
+                                    source={{ uri: item.avatar }}
                                     style={styles.avatarCircular}
                                 />
                             </View>
 
-                            {/* Nombre y subtítulo en el medio */}
                             <View style={styles.infoCentro}>
                                 <Text style={styles.nombre} numberOfLines={1}>
                                     {item.nombre} {item.apellido}
                                 </Text>
+                                <Text style={styles.emailTexto} numberOfLines={1}>
+                                    {item.email}
+                                </Text>
                                 <Text style={styles.subtexto} numberOfLines={1}>
-                                    {esOrg
-                                        ? 'Publicar eventos y gestionar ventas'
-                                        : 'Explorar catálogo y comprar entradas'}
+                                    {item.subtexto}
                                 </Text>
                             </View>
 
-                            {/* Badge a la derecha */}
                             <View
                                 style={[
                                     styles.badge,
@@ -134,7 +202,7 @@ export default function SeleccionUsuarioScreen() {
                     );
                 }}
             />
-        </View>
+        </KeyboardAvoidingView>
     );
 }
 
@@ -143,14 +211,10 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: colors.background,
         paddingHorizontal: 18,
-        paddingTop: 56
+        paddingTop: 50
     },
-    centrado: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 24,
-        backgroundColor: colors.background
+    headerForm: {
+        marginBottom: 10
     },
     etiquetaSuperior: {
         fontSize: 11,
@@ -170,6 +234,66 @@ const styles = StyleSheet.create({
         color: colors.textSecondary,
         marginBottom: 16
     },
+    cajaFormulario: {
+        backgroundColor: colors.surface,
+        borderRadius: 16,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: colors.border,
+        marginBottom: 16
+    },
+    labelInput: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: colors.textSecondary,
+        letterSpacing: 0.5,
+        marginBottom: 6
+    },
+    input: {
+        backgroundColor: colors.surfaceDeep,
+        borderRadius: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        color: colors.text,
+        fontSize: 14,
+        borderWidth: 1,
+        borderColor: colors.border,
+        marginBottom: 12
+    },
+    errorTexto: {
+        color: colors.danger,
+        fontSize: 13,
+        marginBottom: 10
+    },
+    botonIngresar: {
+        backgroundColor: colors.accent,
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: 'center',
+        marginTop: 4
+    },
+    botonIngresarTexto: {
+        color: colors.accentText,
+        fontWeight: '700',
+        fontSize: 15
+    },
+    divisorContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 14,
+        gap: 8
+    },
+    lineaDivisoria: {
+        flex: 1,
+        height: 1,
+        backgroundColor: colors.border
+    },
+    divisorTexto: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: colors.textSecondary,
+        letterSpacing: 0.5
+    },
     filaChat: {
         backgroundColor: colors.surface,
         borderRadius: 16,
@@ -180,39 +304,33 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     avatarContainer: {
-        position: 'relative',
         marginRight: 14
     },
     avatarCircular: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+        width: 52,
+        height: 52,
+        borderRadius: 26,
         backgroundColor: colors.surfaceDeep,
         borderWidth: 1.5,
         borderColor: colors.border
-    },
-    puntoEstado: {
-        position: 'absolute',
-        bottom: 1,
-        right: 1,
-        width: 13,
-        height: 13,
-        borderRadius: 7,
-        borderWidth: 2,
-        borderColor: colors.surface
     },
     infoCentro: {
         flex: 1,
         marginRight: 10
     },
     nombre: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '600',
         color: colors.text,
-        marginBottom: 3
+        marginBottom: 2
+    },
+    emailTexto: {
+        fontSize: 12,
+        color: colors.accent,
+        marginBottom: 2
     },
     subtexto: {
-        fontSize: 13,
+        fontSize: 12,
         color: colors.textSecondary
     },
     badge: {
@@ -235,23 +353,5 @@ const styles = StyleSheet.create({
     },
     badgeTextoOrg: {
         color: colors.estadosCompra.REEMBOLSADA.text
-    },
-    errorTexto: {
-        color: colors.danger,
-        textAlign: 'center',
-        marginBottom: 20,
-        fontSize: 14,
-        lineHeight: 20
-    },
-    botonPrincipal: {
-        backgroundColor: colors.ticketBg,
-        paddingHorizontal: 24,
-        paddingVertical: 14,
-        borderRadius: 14
-    },
-    botonPrincipalTexto: {
-        color: colors.ticketText,
-        fontWeight: '600',
-        fontSize: 15
     }
 });

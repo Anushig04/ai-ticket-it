@@ -483,6 +483,26 @@ describe('Fase 1, 3 y 5 — Dominio Autovalidado, Services y Mocking', () => {
                 })
             ).toThrow(/Evento no encontrado/);
         });
+        test('obtenerDetalleParaUsuario permite al comprador y al organizador, pero rechaza a terceros (403)', () => {
+            const detalleComprador = compraService.obtenerDetalleParaUsuario({
+                compraId: 'compra-1',
+                usuarioId: 'comp-1'
+            });
+            expect(detalleComprador.id).toBe('compra-1');
+
+            const detalleOrganizador = compraService.obtenerDetalleParaUsuario({
+                compraId: 'compra-1',
+                usuarioId: 'org-1'
+            });
+            expect(detalleOrganizador.id).toBe('compra-1');
+
+            expect(() =>
+                compraService.obtenerDetalleParaUsuario({
+                    compraId: 'compra-1',
+                    usuarioId: 'comp-2'
+                })
+            ).toThrow(/No tenés autorización para ver el detalle de esta compra/);
+        });
     });
 
     describe('ReseniaService', () => {

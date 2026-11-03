@@ -19,9 +19,18 @@ function obtenerBaseUrl() {
 export const API_BASE_URL = obtenerBaseUrl();
 
 let usuarioActualId = null;
+let authToken = null;
 
 export function setUsuarioHeader(id) {
     usuarioActualId = id ? String(id) : null;
+}
+
+export function setAuthToken(token) {
+    authToken = token ? String(token) : null;
+}
+
+export function getAuthToken() {
+    return authToken;
 }
 
 export async function apiRequest(endpoint, { method = 'GET', body, headers = {} } = {}) {
@@ -30,7 +39,10 @@ export async function apiRequest(endpoint, { method = 'GET', body, headers = {} 
         ...headers
     };
 
-    if (usuarioActualId) {
+    // Estándar seguro: Autenticación mediante JSON Web Token (Bearer)
+    if (authToken) {
+        configHeaders['Authorization'] = `Bearer ${authToken}`;
+    } else if (usuarioActualId) {
         configHeaders['x-user-id'] = usuarioActualId;
     }
 

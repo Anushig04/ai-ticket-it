@@ -1,19 +1,20 @@
 import { Router } from 'express';
-import { requerirUsuarioActual } from '../middlewares/usuarioActual.js';
+import { requerirUsuarioActual, requerirRol } from '../middlewares/usuarioActual.js';
 
 export function crearComprasRouter(compraController) {
     const router = Router();
 
-    router.post('/', requerirUsuarioActual, compraController.comprar);
-    router.get('/mias', requerirUsuarioActual, compraController.listarMias);
-    router.get('/:id', compraController.obtenerDetalle);
-    router.patch('/:id/estado', requerirUsuarioActual, compraController.cambiarEstado);
-    router.post('/:id/cancelar', requerirUsuarioActual, compraController.cancelar);
+    // Endpoints restringidos al rol de Comprador
+    router.post('/', requerirUsuarioActual, requerirRol('comprador'), compraController.comprar);
+    router.get('/mias', requerirUsuarioActual, requerirRol('comprador'), compraController.listarMias);
+    router.post('/:id/cancelar', requerirUsuarioActual, requerirRol('comprador'), compraController.cancelar);
+    router.post('/:id/resenia', requerirUsuarioActual, requerirRol('comprador'), compraController.crearResenia);
 
-    // Sub-recursos de una compra (chat y reseña)
+    // Endpoints compartidos por ambos roles (validados por titularidad/organizador en el servicio)
+    router.get('/:id', requerirUsuarioActual, compraController.obtenerDetalle);
+    router.patch('/:id/estado', requerirUsuarioActual, compraController.cambiarEstado);
     router.get('/:id/mensajes', requerirUsuarioActual, compraController.listarMensajes);
     router.post('/:id/mensajes', requerirUsuarioActual, compraController.agregarMensaje);
-    router.post('/:id/resenia', requerirUsuarioActual, compraController.crearResenia);
 
     return router;
 }

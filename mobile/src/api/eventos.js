@@ -1,6 +1,6 @@
 import { apiRequest } from './client';
 
-export const obtenerUsuarios = () => apiRequest('/usuarios');
+export const obtenerMiPerfil = () => apiRequest('/auth/me');
 
 export const obtenerCategorias = () => apiRequest('/categorias');
 

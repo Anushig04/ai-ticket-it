@@ -28,7 +28,8 @@ export class Compra {
         total,
         estado = EstadoCompra.PENDIENTE,
         mensajes = [],
-        historialEstados = []
+        historialEstados = [],
+        resenia = null
     }) {
         if (!(comprador instanceof Usuario)) {
             throw new DomainError('El atributo "comprador" debe ser una instancia de Usuario', 400);
@@ -54,6 +55,7 @@ export class Compra {
         this.estado = estado;
         this.mensajes = mensajes;
         this.historialEstados = historialEstados;
+        this.resenia = resenia;
     }
 
     puedeTransicionarA(nuevoEstado) {
@@ -93,14 +95,27 @@ export class Compra {
         return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
     }
 
-    puedeCancelarse(fechaActual = new Date()) {
+    validarCancelacion(fechaActual = new Date()) {
+        if (this.estado === EstadoCompra.UTILIZADA) {
+            throw new DomainError('No se puede cancelar una compra ya utilizada', 409);
+        }
         if (
-            this.estado === EstadoCompra.UTILIZADA ||
             this.estado === EstadoCompra.CANCELADA ||
             this.estado === EstadoCompra.REEMBOLSADA
         ) {
+            throw new DomainError('La compra ya se encuentra cancelada', 409);
+        }
+        if (this.evento.fecha.getTime() <= fechaActual.getTime()) {
+            throw new DomainError('No se puede cancelar una compra si el evento ya se realizó', 409);
+        }
+    }
+
+    puedeCancelarse(fechaActual = new Date()) {
+        try {
+            this.validarCancelacion(fechaActual);
+            return true;
+        } catch {
             return false;
         }
-        return this.evento.fecha.getTime() > fechaActual.getTime();
     }
 }

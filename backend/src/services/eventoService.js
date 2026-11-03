@@ -2,6 +2,22 @@ import { Evento } from '../domain/Evento.js';
 import { TipoEntrada } from '../domain/TipoEntrada.js';
 import { DomainError } from '../errors/DomainError.js';
 
+// Patrón Strategy: Estrategias de ordenamiento desacopladas (evita Switch Statements y cumple OCP)
+export const ESTRATEGIAS_ORDENAMIENTO = Object.freeze({
+    precio: () => (a, b) => a.precioMinimo() - b.precioMinimo(),
+    fecha: () => (a, b) => a.fecha.getTime() - b.fecha.getTime(),
+    puntaje: (reseniaService) => (a, b) => {
+        if (!reseniaService) return 0;
+        const promA = reseniaService.calcularPromedioOrganizador(a.organizador.id);
+        const promB = reseniaService.calcularPromedioOrganizador(b.organizador.id);
+        // Los organizadores sin reseñas (null) van al final
+        if (promA === null && promB === null) return 0;
+        if (promA === null) return 1;
+        if (promB === null) return -1;
+        return promB - promA;
+    }
+});
+
 export class EventoService {
     constructor({ eventoRepo, categoriaRepo, usuarioRepo, reseniaService }) {
         this.eventoRepo = eventoRepo;
@@ -158,20 +174,9 @@ export class EventoService {
             resultado = resultado.filter((e) => e.tuPrecioEstaEntre(min, max));
         }
 
-        if (orden === 'precio') {
-            resultado.sort((a, b) => a.precioMinimo() - b.precioMinimo());
-        } else if (orden === 'fecha') {
-            resultado.sort((a, b) => a.fecha.getTime() - b.fecha.getTime());
-        } else if (orden === 'puntaje' && this.reseniaService) {
-            resultado.sort((a, b) => {
-                const promA = this.reseniaService.calcularPromedioOrganizador(a.organizador.id);
-                const promB = this.reseniaService.calcularPromedioOrganizador(b.organizador.id);
-                // Los organizadores sin reseñas (null) van al final
-                if (promA === null && promB === null) return 0;
-                if (promA === null) return 1;
-                if (promB === null) return -1;
-                return promB - promA;
-            });
+        const estrategiaFactory = ESTRATEGIAS_ORDENAMIENTO[orden];
+        if (estrategiaFactory) {
+            resultado.sort(estrategiaFactory(this.reseniaService));
         }
 
         return resultado;

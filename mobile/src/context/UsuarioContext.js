@@ -1,18 +1,44 @@
 import React, { createContext, useContext, useState } from 'react';
-import { setUsuarioHeader } from '../api/client';
+import { setUsuarioHeader, setAuthToken, apiRequest } from '../api/client';
 
 const UsuarioContext = createContext(null);
 
 export function UsuarioProvider({ children }) {
     const [usuarioActual, setUsuarioActual] = useState(null);
+    const [token, setToken] = useState(null);
 
-    const seleccionarUsuario = (usuario) => {
-        setUsuarioHeader(usuario ? usuario.id : null);
-        setUsuarioActual(usuario);
+    const loginConPassword = async (email, password = '123456') => {
+        const respuesta = await apiRequest('/auth/login', {
+            method: 'POST',
+            body: { email, password }
+        });
+        setAuthToken(respuesta.token);
+        setUsuarioHeader(respuesta.usuario.id);
+        setToken(respuesta.token);
+        setUsuarioActual(respuesta.usuario);
+        return respuesta;
+    };
+
+    const seleccionarUsuario = async (usuario) => {
+        if (!usuario) {
+            cerrarSesion();
+            return;
+        }
+        try {
+            // Inicia sesión de forma segura obteniendo un token JWT firmado
+            const email = usuario.email || `${usuario.nombre.toLowerCase()}@ticketit.com`;
+            await loginConPassword(email, '123456');
+        } catch (_err) {
+            // Fallback de contingencia
+            setUsuarioHeader(usuario.id);
+            setUsuarioActual(usuario);
+        }
     };
 
     const cerrarSesion = () => {
+        setAuthToken(null);
         setUsuarioHeader(null);
+        setToken(null);
         setUsuarioActual(null);
     };
 
@@ -26,6 +52,8 @@ export function UsuarioProvider({ children }) {
         <UsuarioContext.Provider
             value={{
                 usuarioActual,
+                token,
+                loginConPassword,
                 seleccionarUsuario,
                 cerrarSesion,
                 actualizarFavoritosLocales
