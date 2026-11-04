@@ -20,12 +20,16 @@ import { AuthController } from './controllers/AuthController.js';
 
 import { cargarSeed } from './config/seed.js';
 import { extraerUsuarioActual } from './middlewares/usuarioActual.js';
+import { auditLogger } from './middlewares/auditLogger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { crearRouter } from './routes/index.js';
 
 export function crearApp({ inicializarSeed = true } = {}) {
     const app = express();
     app.disable('x-powered-by');
+
+    // Registro centralizado de auditoría HTTP (Accounting - AAA)
+    app.use(auditLogger);
 
     app.use(cors());
     app.use(express.json({ limit: '10mb' }));

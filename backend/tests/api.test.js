@@ -277,4 +277,20 @@ describe('Fase 5 — Tests de Integración API REST (Supertest)', () => {
         expect(r3.status).toBe(429);
         expect(r3.body.error).toMatch(/Demasiados intentos/);
     });
+
+    test('Accounting: auditLogger registra accesos y emite alerta en consola ante eventos de seguridad (401/403/429)', async () => {
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+        // Provocamos un acceso no autorizado (401)
+        const resSinAuth = await request(app).get('/auth/me');
+        expect(resSinAuth.status).toBe(401);
+
+        // Verificamos que se haya emitido la alerta de auditoría
+        expect(warnSpy).toHaveBeenCalled();
+        const logsEmitidos = warnSpy.mock.calls.map((c) => c.join(' ')).join('\n');
+        expect(logsEmitidos).toMatch(/\[SEGURIDAD - AUDITORÍA\]/);
+        expect(logsEmitidos).toMatch(/AUTENTICACION_FALLIDA_O_TOKEN_INVALIDO/);
+
+        warnSpy.mockRestore();
+    });
 });
